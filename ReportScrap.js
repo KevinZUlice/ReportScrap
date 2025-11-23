@@ -88,8 +88,6 @@
         const playerLink = playerRow.querySelector("a");
         if (playerLink) {
             player = txt(playerLink);
-            // aliance je v data-title toho linku, ale tam máš název kmene, ne [TAG]
-            // ally_tag lze případně doplnit později jiným zdrojem
         }
 
         const vLink = villageRow.querySelector("a");
@@ -184,9 +182,11 @@
         }
     })();
 
-    // Loajalita – pokud se někdy objeví
+    // Loajalita / Oddanost
     (function () {
-        const m = raw_text.match(/Loajalita.*?(\d+).*?(\d+)/i);
+        let m =
+            raw_text.match(/Loajalita.*?(\d+).*?(\d+)/i) ||
+            raw_text.match(/Oddanost.*?(\d+).*?(\d+)/i);
         if (m) {
             loyalty_before = toInt(m[1]);
             loyalty_after = toInt(m[2]);
@@ -233,7 +233,6 @@
         const headers = Array.from(headerRow.querySelectorAll("td,th"));
 
         headers.forEach((cell, idx) => {
-            // v DK je data-unit na <a>, obrázek je .webp
             const a = cell.querySelector("a[data-unit]");
             const img = cell.querySelector("img");
             if (!a && !img) return;
@@ -247,7 +246,7 @@
             if (!rawUnit) return;
 
             rawUnit = rawUnit.toLowerCase();
-            if (!(rawUnit in unitKeyMap)) return; // třeba militia
+            if (!(rawUnit in unitKeyMap)) return;
 
             const unitKey = unitKeyMap[rawUnit];
 
@@ -276,10 +275,10 @@
     let loot_full = null;
 
     (function () {
-        // 1) Primárně se pokusit najít tabulku #attack_results a v ní řádek s Kořistí
         const lootTable = document.querySelector('#attack_results');
+
         if (lootTable) {
-            // v novém layoutu DK jsou ikonky jako <span class="icon header wood/stone/iron">
+            // čísla dřevo/hlína/železo
             const wraps = lootTable.querySelectorAll('span.nowrap');
             wraps.forEach(wrap => {
                 const icon = wrap.querySelector('.icon.header');
@@ -292,9 +291,25 @@
                 else if (/stone|lehm|clay/i.test(cls)) loot_clay = val || 0;
                 else if (/iron/i.test(cls)) loot_iron = val || 0;
             });
+
+            // kapacitu / využití z téhož řádku (Kořist: ... 9.031/26.500)
+            if (!loot_capacity) {
+                const koRow = Array.from(lootTable.querySelectorAll('tr'))
+                    .find(tr => /Kořist/i.test(tr.textContent));
+                if (koRow) {
+                    const m = koRow.textContent.replace(/\s+/g, ' ')
+                        .match(/(\d[\d\.]*)\s*\/\s*(\d[\d\.]*)/);
+                    if (m) {
+                        const used = toInt(m[1]);
+                        const cap = toInt(m[2]);
+                        loot_capacity = cap;
+                        loot_full = cap ? +(used / cap * 100).toFixed(2) : null;
+                    }
+                }
+            }
         }
 
-        // 2) Kapacita (pokud je uvedená)
+        // fallback na starší šablony s textem "Náklad: X/Y"
         if (!loot_capacity) {
             const capMatch = raw_text.match(/Náklad\s*:\s*(\d+)\s*\/\s*(\d+)/i);
             if (capMatch) {
@@ -305,7 +320,7 @@
             }
         }
 
-        // 3) Fallback – když byla nějaká kořist, ale nenajdeme kapacitu
+        // poslední fallback – když je nějaká kořist, ale nikde není kapacita
         if (!loot_capacity && (loot_wood + loot_clay + loot_iron) > 0) {
             loot_capacity = loot_wood + loot_clay + loot_iron;
             loot_full = 100.0;
@@ -331,7 +346,6 @@
                 return sum + Math.max(base - loss, 0);
             }, 0);
 
-        // tady by ideálně měl rozhodovat i text "XY vyhrál", ale zatím nechám heuristiku:
         if (event_type === "conquer") {
             winner_side = "attacker";
         } else if (defSurvivors === 0 && attSurvivors > 0) {
@@ -363,7 +377,7 @@
         defender_ally_tag:     defSide.ally_tag || null,
         defender_village_name: defSide.village_name || null,
         defender_x:            defSide.x,
-        defender_y:           defSide.y,
+        defender_y:            defSide.y,
         defender_continent:    defSide.continent,
 
         winner_side,
@@ -568,4 +582,5 @@
     })(outputText);
 
 })();
+
 
