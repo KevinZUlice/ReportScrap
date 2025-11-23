@@ -79,7 +79,7 @@
         // 1. řádek: hráč
         // 2. řádek: vesnice
         const playerRow = rows[0];
-        const villageRow = rows[1];
+        the villageRow = rows[1];
 
         let player = null;
         let ally_tag = null;
@@ -276,45 +276,38 @@
     let loot_full = null;
 
     (function () {
-        const imgs = Array.from(document.querySelectorAll("img"));
-        let lootRow = null;
-
-        imgs.forEach(img => {
-            const src = img.getAttribute("src") || "";
-            if (/wood\./i.test(src)) {
-                const row = img.closest("tr");
-                if (row) lootRow = row;
-            }
-        });
-
-        if (lootRow) {
-            const tds = lootRow.querySelectorAll("td");
-            tds.forEach(td => {
-                const img = td.querySelector("img");
+        // 1) Primárně se pokusit najít tabulku #attack_results
+        const lootTable = document.querySelector('#attack_results');
+        if (lootTable) {
+            const cells = lootTable.querySelectorAll('td');
+            cells.forEach(td => {
+                const img = td.querySelector('img');
                 if (!img) return;
-                const src = img.getAttribute("src") || "";
+
+                const src = img.getAttribute('src') || '';
                 const val = toInt(td.textContent);
 
-                if (/wood\./i.test(src)) loot_wood = val || 0;
-                if (/stone\.|clay\.|lehm\./i.test(src)) loot_clay = val || 0;
-                if (/iron\./i.test(src)) loot_iron = val || 0;
+                if (/wood/i.test(src)) loot_wood = val || 0;
+                if (/stone|lehm|clay/i.test(src)) loot_clay = val || 0;
+                if (/iron/i.test(src)) loot_iron = val || 0;
             });
         }
 
-        const capMatch = raw_text.match(/Náklad[^0-9]*?(\d+)\s*\/\s*(\d+)/i);
-        if (capMatch) {
-            const used = toInt(capMatch[1]);
-            const cap = toInt(capMatch[2]);
-            loot_capacity = cap;
-            if (cap && used != null) {
-                loot_full = +(used / cap * 100).toFixed(2);
+        // 2) Kapacita (pokud je uvedená)
+        if (!loot_capacity) {
+            const capMatch = raw_text.match(/Náklad\s*:\s*(\d+)\s*\/\s*(\d+)/i);
+            if (capMatch) {
+                const used = toInt(capMatch[1]);
+                const cap = toInt(capMatch[2]);
+                loot_capacity = cap;
+                loot_full = cap ? +(used / cap * 100).toFixed(2) : null;
             }
-        } else {
-            const carried = loot_wood + loot_clay + loot_iron;
-            if (carried > 0) {
-                loot_capacity = carried;
-                loot_full = 100.0;
-            }
+        }
+
+        // 3) Fallback – když byla nějaká kořist, ale nenajdeme kapacitu
+        if (!loot_capacity && (loot_wood + loot_clay + loot_iron) > 0) {
+            loot_capacity = loot_wood + loot_clay + loot_iron;
+            loot_full = 100.0;
         }
     })();
 
