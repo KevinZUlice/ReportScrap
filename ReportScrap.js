@@ -79,7 +79,7 @@
         // 1. řádek: hráč
         // 2. řádek: vesnice
         const playerRow = rows[0];
-        the villageRow = rows[1];
+        const villageRow = rows[1]; // <== tady bylo "the villageRow"
 
         let player = null;
         let ally_tag = null;
