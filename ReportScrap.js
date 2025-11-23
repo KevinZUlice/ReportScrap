@@ -79,7 +79,7 @@
         // 1. řádek: hráč
         // 2. řádek: vesnice
         const playerRow = rows[0];
-        const villageRow = rows[1]; // <== tady bylo "the villageRow"
+        const villageRow = rows[1];
 
         let player = null;
         let ally_tag = null;
@@ -276,20 +276,21 @@
     let loot_full = null;
 
     (function () {
-        // 1) Primárně se pokusit najít tabulku #attack_results
+        // 1) Primárně se pokusit najít tabulku #attack_results a v ní řádek s Kořistí
         const lootTable = document.querySelector('#attack_results');
         if (lootTable) {
-            const cells = lootTable.querySelectorAll('td');
-            cells.forEach(td => {
-                const img = td.querySelector('img');
-                if (!img) return;
+            // v novém layoutu DK jsou ikonky jako <span class="icon header wood/stone/iron">
+            const wraps = lootTable.querySelectorAll('span.nowrap');
+            wraps.forEach(wrap => {
+                const icon = wrap.querySelector('.icon.header');
+                if (!icon) return;
 
-                const src = img.getAttribute('src') || '';
-                const val = toInt(td.textContent);
+                const cls = icon.className || "";
+                const val = toInt(wrap.textContent);
 
-                if (/wood/i.test(src)) loot_wood = val || 0;
-                if (/stone|lehm|clay/i.test(src)) loot_clay = val || 0;
-                if (/iron/i.test(src)) loot_iron = val || 0;
+                if (/wood/i.test(cls)) loot_wood = val || 0;
+                else if (/stone|lehm|clay/i.test(cls)) loot_clay = val || 0;
+                else if (/iron/i.test(cls)) loot_iron = val || 0;
             });
         }
 
@@ -362,7 +363,7 @@
         defender_ally_tag:     defSide.ally_tag || null,
         defender_village_name: defSide.village_name || null,
         defender_x:            defSide.x,
-        defender_y:            defSide.y,
+        defender_y:           defSide.y,
         defender_continent:    defSide.continent,
 
         winner_side,
@@ -567,3 +568,4 @@
     })(outputText);
 
 })();
+
